@@ -31,13 +31,39 @@ path_to_website_contents = stack_config.require('pathToWebsiteContents')
 certificate_arn = stack_config.get('certificateArn')
 
 # Create an S3 bucket configured as a website bucket.
-content_bucket = pulumi_aws.s3.Bucket('contentBucket',
-    bucket=target_domain,
-    acl='public-read',
+web_bucket = pulumi_aws.s3.Bucket('s3-website-bucket',
     website=pulumi_aws.s3.BucketWebsiteArgs(
-        index_document='index.html',
-        error_document='404.html'
+        index_document="index.html",
     ))
+
+content_dir = "www"
+for file in os.listdir(content_dir):
+    filepath = os.path.join(content_dir, file)
+    mime_type, _ = mimetypes.guess_type(filepath)
+    obj = pulumi_aws.s3.BucketObject(file,
+        bucket=web_bucket.id,
+        source=FileAsset(filepath),
+        content_type=mime_type)
+
+def public_read_policy_for_bucket(bucket_name):
+    return json.dumps({
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Resource": [
+                f"arn:aws:s3:::{bucket_name}/*",
+            ]
+        }]
+    })
+
+bucket_name = web_bucket.id
+bucket_policy = pulumi_aws.s3.BucketPolicy("bucket-policy",
+    bucket=bucket_name,
+    policy=bucket_name.apply(public_read_policy_for_bucket))
 
 def crawl_directory(content_dir, f):
     """
@@ -63,10 +89,10 @@ def bucket_object_converter(filepath):
         relative_path,
         key=relative_path,
         acl='public-read',
-        bucket=content_bucket.id,
+        bucket=web_bucket.id,
         content_type=mime_type,
         source=FileAsset(filepath),
-        opts=ResourceOptions(parent=content_bucket)
+        opts=ResourceOptions(parent=web_bucket)
     )
 
 # Crawl the web content root path and convert the file paths to S3 object resources.
@@ -118,8 +144,8 @@ cdn = pulumi_aws.cloudfront.Distribution('cdn',
         target_domain
     ],
     origins=[pulumi_aws.cloudfront.DistributionOriginArgs(
-        origin_id=content_bucket.arn,
-        domain_name=content_bucket.website_endpoint,
+        origin_id=web_bucket.arn,
+        domain_name=web_bucket.website_endpoint,
         custom_origin_config=pulumi_aws.cloudfront.DistributionOriginCustomOriginConfigArgs(
             origin_protocol_policy='http-only',
             http_port=80,
@@ -129,7 +155,7 @@ cdn = pulumi_aws.cloudfront.Distribution('cdn',
     )],
     default_root_object='index.html',
     default_cache_behavior=pulumi_aws.cloudfront.DistributionDefaultCacheBehaviorArgs(
-        target_origin_id=content_bucket.arn,
+        target_origin_id=web_bucket.arn,
         viewer_protocol_policy='redirect-to-https',
         allowed_methods=['GET', 'HEAD', 'OPTIONS'],
         cached_methods=['GET', 'HEAD', 'OPTIONS'],
@@ -190,7 +216,7 @@ def create_alias_record(target_domain, distribution):
 alias_a_record = create_alias_record(target_domain, cdn)
 
 # Export the bucket URL, bucket website endpoint, and the CloudFront distribution information.
-export('content_bucket_url', Output.concat('s3://', content_bucket.bucket))
-export('content_bucket_website_endpoint', content_bucket.website_endpoint)
+export('content_bucket_url', Output.concat('s3://', web_bucket.bucket))
+export('content_bucket_website_endpoint', web_bucket.website_endpoint)
 export('cloudfront_domain', cdn.domain_name)
 export('target_domain_endpoint', f'https://{target_domain}/')

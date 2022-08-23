@@ -6,6 +6,7 @@ from pulumi import export, FileAsset
 from pulumi_aws import s3
 
 web_bucket = s3.Bucket('s3-website-bucket',
+    bucket="wwc-melbourne",
     website=s3.BucketWebsiteArgs(
         index_document="index.html",
     ))

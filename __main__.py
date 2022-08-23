@@ -32,6 +32,7 @@ certificate_arn = stack_config.get('certificateArn')
 
 # Create an S3 bucket configured as a website bucket.
 web_bucket = pulumi_aws.s3.Bucket('s3-website-bucket',
+    bucket="wwc-melbourne",
     website=pulumi_aws.s3.BucketWebsiteArgs(
         index_document="index.html",
     ))

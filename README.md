@@ -1,4 +1,4 @@
-*The content of this readme is lifted entirely from [Pulumi's examples repository](https://github.com/pulumi/examples/aws-py-s3-folder)*
+*The content of this repository, including this readme, is lifted entirely from [Pulumi's examples repository](https://github.com/pulumi/examples/aws-py-s3-folder)*
 <br>
 
 # Host a Static Website on Amazon S3

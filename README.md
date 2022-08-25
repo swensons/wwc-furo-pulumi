@@ -17,7 +17,7 @@ with `***`.
    3. Copy the token value (It starts with `pul-`)
    4. Back into your coding environment, on the terminal type: `pulumi login` and paste the token value when prompted.
 
-2. Create a new stack:
+2. Make sure your terminal is in this directory, and create a new stack:
 
     ```bash
     $ pulumi stack init website-testing

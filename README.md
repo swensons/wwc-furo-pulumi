@@ -29,20 +29,25 @@ set:
 Note: some values in this example will be different from run to run.  These values are indicated
 with `***`.
 
-1. Create a new stack:
+1. Connect your workspace to your Pulumi account
+   1. Go to https://app.pulumi.com/account/tokens
+   2. Click on `Create Token`
+   3. Copy the token value (It starts with `pul-`)
+   4. Back into your coding environment, on the terminal type: `pulumi login` and paste the token value when prompted.
+
+2. Create a new stack:
 
     ```bash
     $ pulumi stack init website-testing
     ```
 
-1. Set the AWS region:
+3. Set the AWS region:
 
     ```bash
-    $ pulumi config set aws:region us-west-2
+    $ pulumi config set aws:region ap-southeast-2
     ```
 
-1. Run `pulumi up` to preview and deploy changes.  After the preview is shown you will be
-    prompted if you want to continue or not.
+4. Run `pulumi up` to preview and deploy changes.  After the preview is shown you will be prompted if you want to continue or not.
 
     ```bash
     $ pulumi up
@@ -61,7 +66,7 @@ with `***`.
     +   └─ aws:route53:Record             ***                                       create
     ```
 
-1. To see the resources that were created, run `pulumi stack output`:
+5. To see the resources that were created, run `pulumi stack output`:
 
     ```bash
     $ pulumi stack output
@@ -73,7 +78,7 @@ with `***`.
         target_domain_endpoint           https://***/
     ```
 
-1. To see that the S3 objects exist, you can either use the AWS Console or the AWS CLI:
+6. To see that the S3 objects exist, you can either use the AWS Console or the AWS CLI:
 
     ```bash
     $ aws s3 ls $(pulumi stack output content_bucket_url)
@@ -130,3 +135,11 @@ using the AWS CLI.
 ```bash
 aws s3 sync ./www/ s3://example-bucket/
 ```
+7. Open the site URL in a browser to see both the rendered HTML, the favicon, and Python splash image:
+
+    ```bash
+    $ pulumi stack output website_url
+    ***.s3-website-us-west-2.amazonaws.com
+    ```
+
+8. To clean up resources, run `pulumi destroy` and answer the confirmation question at the prompt.
